@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>晓晓 · 生日快乐</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --rose: #ff6fae;
+      --deep-rose: #b92b68;
+      --cream: #fff6df;
+      --champagne: #ffd98c;
+      --ink: #5b2442;
+      --glass: rgba(255,255,255,.28);
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      overflow-x: hidden;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      color: #fff;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(255,255,255,.92), transparent 14%),
+        radial-gradient(circle at 86% 10%, rgba(255,225,240,.88), transparent 22%),
+        radial-gradient(circle at 18% 86%, rgba(255,230,166,.82), transparent 24%),
+        radial-gradient(circle at 78% 84%, rgba(190,165,255,.34), transparent 28%),
+        linear-gradient(145deg, #ff8fbd 0%, #ff6f98 38%, #f9a65f 72%, #ffe8ad 100%);
+    }
+
+    body {
+      min-height: 100svh;
+      position: relative;
+      isolation: isolate;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    body::before {
+      z-index: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.13) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.10) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: radial-gradient(circle at center, black 0 56%, transparent 82%);
+    }
+
+    body::after {
+      z-index: 1;
+      background:
+        radial-gradient(circle at 50% 26%, rgba(255,255,255,.30), transparent 22%),
+        linear-gradient(180deg, rgba(255,255,255,.12), transparent 42%);
+      mix-blend-mode: soft-light;
+    }
+
+    .music-button {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      right: 14px;
+      z-index: 9999;
+      padding: 11px 15px;
+      border: 1px solid rgba(255,255,255,.78);
+      border-radius: 999px;
+      background: rgba(255,255,255,.84);
+      color: #c0266c;
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 14px 38px rgba(106, 20, 61, .22), inset 0 1px 0 rgba(255,255,255,.9);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .music-button.playing { background: #fff7ce; color: #9a3412; }
+
+    .page {
+      position: relative;
+      z-index: 3;
+      min-height: 100svh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: calc(70px + env(safe-area-inset-top)) 14px calc(26px + env(safe-area-inset-bottom));
+    }
+
+    .card {
+      position: relative;
+      width: min(94vw, 440px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      padding: 30px 20px 28px;
+      border: 1px solid rgba(255,255,255,.64);
+      border-radius: 34px;
+      background:
+        linear-gradient(145deg, rgba(255,255,255,.42), rgba(255,255,255,.15)),
+        radial-gradient(circle at 20% 0%, rgba(255,255,255,.72), transparent 36%);
+      box-shadow: 0 30px 90px rgba(128, 20, 68, .30), inset 0 1px 0 rgba(255,255,255,.55);
+      backdrop-filter: blur(25px) saturate(125%);
+      -webkit-backdrop-filter: blur(25px) saturate(125%);
+      overflow: hidden;
+      animation: cardIn .9s cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -120px -80px auto;
+      height: 260px;
+      background: radial-gradient(circle at 50% 0%, rgba(255,255,255,.72), transparent 64%);
+      pointer-events: none;
+    }
+
+    .card::after {
+      content: "Happy Birthday";
+      position: absolute;
+      right: -18px;
+      bottom: 14px;
+      color: rgba(255,255,255,.13);
+      font-size: 58px;
+      font-weight: 900;
+      letter-spacing: -2px;
+      transform: rotate(-8deg);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .content, .visual { position: relative; z-index: 2; width: 100%; }
+    .content { text-align: center; }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 16px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.30);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .4px;
+      color: #fffdf6;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.42), 0 10px 28px rgba(143, 28, 80, .10);
+    }
+
+    h1 {
+      font-size: clamp(50px, 15vw, 72px);
+      line-height: .92;
+      letter-spacing: -2.4px;
+      text-shadow: 0 14px 32px rgba(118,20,66,.25);
+    }
+
+    .name {
+      display: block;
+      margin-top: 10px;
+      color: #fff8c9;
+      filter: drop-shadow(0 6px 12px rgba(151, 72, 0, .16));
+    }
+
+    .desc {
+      margin: 20px auto 0;
+      max-width: 372px;
+      font-size: 16.5px;
+      line-height: 1.86;
+      color: rgba(255,255,255,.98);
+      font-weight: 700;
+      text-shadow: 0 2px 12px rgba(95, 22, 55, .12);
+    }
+
+    .wish-tags {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 20px;
+    }
+
+    .wish-tags span {
+      display: inline-flex;
+      align-items: center;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.27);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.36);
+      color: rgba(255,255,255,.99);
+      font-size: 13px;
+      font-weight: 900;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 315px;
+      margin-top: -2px;
+    }
+
+    .cake-stage {
+      position: relative;
+      width: min(78vw, 315px);
+      aspect-ratio: 1 / 1;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle, rgba(255,255,255,.62), rgba(255,255,255,.12) 58%, transparent 64%),
+        conic-gradient(from 40deg, rgba(255,255,255,.42), transparent 18%, rgba(255,246,196,.36), transparent 44%, rgba(255,255,255,.42));
+      animation: sway 5s ease-in-out infinite;
+    }
+
+    .ring {
+      position: absolute;
+      inset: 16px;
+      border: 2px dashed rgba(255,255,255,.62);
+      border-radius: 50%;
+      animation: spin 26s linear infinite;
+    }
+
+    .ring.two { inset: 46px; border-style: solid; opacity: .32; animation-duration: 19s; animation-direction: reverse; }
+
+    .sparkle {
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 18px #fff, 0 0 34px #fff3a8;
+      animation: twinkle 1.7s ease-in-out infinite alternate;
+    }
+    .sparkle.s1 { left: 34px; top: 76px; }
+    .sparkle.s2 { right: 42px; top: 52px; animation-delay: .5s; }
+    .sparkle.s3 { right: 30px; bottom: 88px; animation-delay: .9s; }
+
+    .cake {
+      position: relative;
+      width: 230px;
+      height: 238px;
+      transform: scale(.92);
+      filter: drop-shadow(0 26px 28px rgba(103, 26, 55, .25));
+      animation: floatCake 3s ease-in-out infinite;
+    }
+
+    .candle {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      width: 18px;
+      height: 58px;
+      transform: translateX(-50%);
+      border-radius: 10px;
+      background: repeating-linear-gradient(45deg, #fff 0 8px, #ff75ad 8px 16px);
+      z-index: 12;
+      box-shadow: inset -3px 0 0 rgba(255, 120, 170, .25), 0 8px 18px rgba(122, 24, 60, .10);
+    }
+
+    .flame {
+      position: absolute;
+      left: 50%;
+      top: -30px;
+      width: 30px;
+      height: 40px;
+      transform: translateX(-50%) rotate(8deg);
+      border-radius: 52% 48% 54% 46% / 62% 62% 38% 38%;
+      background: radial-gradient(circle at 60% 66%, #fff 0 16%, #fff4aa 17% 55%, #ff9d1e 56% 100%);
+      box-shadow: 0 0 28px #fff3a0, 0 0 54px #ff9f1c;
+      animation: flame 1s ease-in-out infinite alternate;
+    }
+
+    .strawberries {
+      position: absolute;
+      top: 55px;
+      left: 43px;
+      width: 145px;
+      display: flex;
+      justify-content: space-between;
+      z-index: 11;
+    }
+
+    .strawberries i {
+      width: 24px;
+      height: 29px;
+      border-radius: 60% 60% 70% 70%;
+      background:
+        radial-gradient(circle at 35% 34%, #fff 0 7%, transparent 8%),
+        radial-gradient(circle at 58% 52%, rgba(255,255,255,.45) 0 3%, transparent 4%),
+        linear-gradient(135deg, #ff6689, #dc1648);
+      transform: rotate(-12deg);
+      box-shadow: inset -5px -6px 0 rgba(99, 0, 37, .14);
+    }
+    .strawberries i:nth-child(2) { transform: translateY(-10px) rotate(8deg); }
+    .strawberries i:nth-child(3) { transform: translateY(-2px) rotate(16deg); }
+
+    .cake-top {
+      position: absolute;
+      left: 20px;
+      top: 76px;
+      width: 190px;
+      height: 62px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 34% 28%, #fff, #fff9fc 45%, #ffd7e8 100%);
+      z-index: 9;
+      box-shadow: inset 0 -9px 0 rgba(255, 155, 196, .21), 0 9px 16px rgba(153, 38, 86, .08);
+    }
+
+    .drips {
+      position: absolute;
+      left: 31px;
+      top: 106px;
+      z-index: 10;
+      display: flex;
+      gap: 20px;
+    }
+    .drips i {
+      width: 19px;
+      height: 40px;
+      border-radius: 0 0 15px 15px;
+      background: linear-gradient(180deg, #fff8fc, #ffd8ea);
+      box-shadow: inset -4px -4px 0 rgba(255, 155, 199, .18);
+    }
+    .drips i:nth-child(2) { height: 29px; }
+    .drips i:nth-child(3) { height: 46px; }
+    .drips i:nth-child(4) { height: 32px; }
+    .drips i:nth-child(5) { height: 39px; }
+
+    .cake-mid {
+      position: absolute;
+      left: 20px;
+      top: 107px;
+      width: 190px;
+      height: 82px;
+      border-radius: 0 0 34px 34px;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.22), transparent 20% 72%, rgba(154, 22, 78, .12)),
+        linear-gradient(180deg, #ff9fca, #ff579e 58%, #f43f8f);
+      z-index: 6;
+      box-shadow: inset -18px 0 0 rgba(176, 24, 91, .10);
+    }
+
+    .gold-ribbon {
+      position: absolute;
+      left: 22px;
+      top: 158px;
+      width: 186px;
+      height: 16px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #ffe9a3, #f5b938, #fff2b6);
+      z-index: 12;
+      box-shadow: 0 4px 10px rgba(160, 92, 0, .10), inset 0 -2px 0 rgba(153, 88, 0, .10);
+    }
+
+    .sprinkles { position: absolute; left: 48px; top: 123px; width: 136px; height: 34px; z-index: 13; }
+    .sprinkles i { position: absolute; width: 15px; height: 5px; border-radius: 999px; background: #fff176; transform: rotate(22deg); }
+    .sprinkles i:nth-child(2) { left: 24px; top: 13px; background: #7dd3fc; transform: rotate(-24deg); }
+    .sprinkles i:nth-child(3) { left: 55px; top: 2px; background: #c4b5fd; transform: rotate(14deg); }
+    .sprinkles i:nth-child(4) { left: 84px; top: 18px; background: #86efac; transform: rotate(-18deg); }
+    .sprinkles i:nth-child(5) { left: 112px; top: 7px; background: #facc15; transform: rotate(28deg); }
+    .sprinkles i:nth-child(6) { left: 38px; top: 27px; background: #fff; transform: rotate(32deg); }
+    .sprinkles i:nth-child(7) { left: 74px; top: 27px; background: #fecdd3; transform: rotate(-28deg); }
+
+    .cream { position: absolute; top: 178px; left: 31px; z-index: 13; display: flex; gap: 8px; }
+    .cream i { width: 24px; height: 26px; border-radius: 50% 50% 13px 13px; background: #fff9fc; box-shadow: inset -4px -4px 0 rgba(255, 170, 205, .18); }
+
+    .cake-base {
+      position: absolute;
+      left: 0;
+      bottom: 18px;
+      width: 230px;
+      height: 78px;
+      border-radius: 32px 32px 42px 42px;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.22), transparent 25% 72%, rgba(164, 84, 0, .10)),
+        linear-gradient(180deg, #fff0ad, #ffd166 58%, #f59e0b);
+      z-index: 4;
+      box-shadow: inset -22px -9px 0 rgba(180, 83, 9, .10);
+    }
+
+    .cake-shadow { position: absolute; left: 28px; bottom: 12px; width: 174px; height: 20px; border-radius: 50%; background: rgba(100, 18, 55, .18); filter: blur(4px); z-index: 1; }
+    .plate { position: absolute; left: 10px; bottom: 0; width: 210px; height: 27px; border-radius: 50%; background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.58)); box-shadow: inset 0 -4px 0 rgba(255,255,255,.45), 0 8px 20px rgba(105, 22, 58, .12); z-index: 2; }
+
+    .confetti { position: fixed; top: -24px; z-index: 5; width: 8px; height: 14px; border-radius: 3px; background: var(--color); animation: confettiFall var(--duration) linear infinite; animation-delay: var(--delay); pointer-events: none; opacity: .92; }
+    .blessing { position: fixed; z-index: 6; left: var(--left); bottom: -90px; max-width: min(82vw, 360px); padding: 11px 15px; border-radius: 999px; background: rgba(255,255,255,.34); color: #fff; font-size: 14px; font-weight: 900; box-shadow: inset 0 0 0 1px rgba(255,255,255,.42), 0 15px 36px rgba(104,22,60,.17); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); animation: blessingFloat var(--duration) ease-in forwards; pointer-events: none; white-space: nowrap; }
+
+    @keyframes cardIn { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes sway { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(1.8deg); } }
+    @keyframes floatCake { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+    @keyframes flame { from { transform: translateX(-50%) rotate(-8deg) scale(.92); } to { transform: translateX(-50%) rotate(9deg) scale(1.08); } }
+    @keyframes twinkle { from { transform: scale(.6); opacity: .5; } to { transform: scale(1.25); opacity: 1; } }
+    @keyframes confettiFall { from { transform: translateY(-20px) rotate(0deg); opacity: 1; } to { transform: translateY(110vh) rotate(760deg); opacity: .22; } }
+    @keyframes blessingFloat { 0% { transform: translateY(0) scale(.86); opacity: 0; } 12% { opacity: 1; } 82% { opacity: 1; } 100% { transform: translateY(-105vh) scale(1.04); opacity: 0; } }
+
+    @media (min-width: 760px) {
+      .page { padding: 78px 28px 46px; }
+      .card { width: min(94vw, 960px); min-height: 635px; display: grid; grid-template-columns: 1.03fr .97fr; gap: 36px; padding: 58px; }
+      .content { text-align: left; }
+      .wish-tags { justify-content: flex-start; }
+      .visual { min-height: 430px; }
+      .cake-stage { width: min(40vw, 382px); }
+      .cake { transform: scale(1.03); }
+      .blessing { font-size: 18px; padding: 12px 18px; max-width: min(78vw, 400px); }
+    }
+  </style>
+</head>
+<body>
+  <button class="music-button" id="musicButton" type="button">🎵 点击开启音乐</button>
+
+  <audio id="birthdayMusic" loop preload="auto">
+    <source src="birthday_music_0030_0120.m4a" type="audio/mp4">
+  </audio>
+
+  <main class="page">
+    <section class="card">
+      <div class="content">
+        <div class="tag">✨ 5月18日 · 只属于晓晓的一天</div>
+        <h1>生日快乐<span class="name">晓晓</span></h1>
+        <p class="desc">愿今天的风、花、音乐和蛋糕，都把温柔送到你身边。新的一岁，愿你继续做闪闪发光的自己：被坚定选择，被好运眷顾，也被生活悄悄偏爱。</p>
+        <div class="wish-tags">
+          <span>愿你常被爱意接住 💖</span>
+          <span>愿每一步都有光 ✨</span>
+          <span>愿快乐不止今天 🎂</span>
+        </div>
+      </div>
+
+      <div class="visual">
+        <div class="cake-stage">
+          <div class="ring"></div>
+          <div class="ring two"></div>
+          <i class="sparkle s1"></i><i class="sparkle s2"></i><i class="sparkle s3"></i>
+          <div class="cake" aria-label="birthday cake">
+            <div class="candle"><div class="flame"></div></div>
+            <div class="strawberries"><i></i><i></i><i></i></div>
+            <div class="cake-top"></div>
+            <div class="drips"><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="sprinkles"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="cake-mid"></div>
+            <div class="gold-ribbon"></div>
+            <div class="cream"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="cake-base"></div>
+            <div class="cake-shadow"></div>
+            <div class="plate"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function setupMusic() {
+      const music = document.getElementById('birthdayMusic');
+      const button = document.getElementById('musicButton');
+      music.volume = 0.85;
+
+      async function playMusic() {
+        try {
+          await music.play();
+          button.textContent = '⏸ 暂停音乐';
+          button.classList.add('playing');
+        } catch (e) {
+          button.textContent = '🎵 点击开启音乐';
+          button.classList.remove('playing');
+        }
+      }
+
+      button.addEventListener('click', async () => {
+        if (music.paused) {
+          await playMusic();
+        } else {
+          music.pause();
+          button.textContent = '▶ 播放音乐';
+          button.classList.remove('playing');
+        }
+      });
+
+      window.addEventListener('load', playMusic);
+      document.addEventListener('touchstart', playMusic, { once: true });
+      document.addEventListener('click', playMusic, { once: true });
+    }
+
+    function createConfetti() {
+      const colors = ['#ffffff', '#fff4a3', '#ff7eb3', '#7dd3fc', '#c4b5fd', '#fcd34d', '#f9a8d4'];
+      const count = window.innerWidth < 600 ? 58 : 96;
+      for (let i = 0; i < count; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti';
+        piece.style.left = Math.random() * 100 + '%';
+        piece.style.setProperty('--color', colors[i % colors.length]);
+        piece.style.setProperty('--delay', Math.random() * 4 + 's');
+        piece.style.setProperty('--duration', (4.4 + Math.random() * 4.2) + 's');
+        document.body.appendChild(piece);
+      }
+    }
+
+    function createBlessings() {
+      const messages = [
+        '晓晓，生日快乐，愿你今天被满满爱意包围 🎂',
+        '愿你的新一岁，温柔又明亮 ✨',
+        '愿所有美好，都在路上慢慢奔向你 🌙',
+        '愿你有热爱的事，也有安心的归处 💖',
+        '愿你想要的幸运，都如约而至 🍀',
+        '愿你眼里有星河，心里有暖光 🌟',
+        '愿生活给你甜，也给你很多惊喜 🍰',
+        '愿你被理解、被珍惜、被坚定选择 ☁️',
+        '今天的主角晓晓，要一直快乐呀 💫',
+        '愿未来每一天，都比昨天更喜欢自己 🌸'
+      ];
+
+      function addOne() {
+        const item = document.createElement('div');
+        item.className = 'blessing';
+        item.textContent = messages[Math.floor(Math.random() * messages.length)];
+        item.style.setProperty('--left', Math.random() * 54 + 7 + '%');
+        item.style.setProperty('--duration', (5.4 + Math.random() * 3.2) + 's');
+        document.body.appendChild(item);
+        setTimeout(() => item.remove(), 9600);
+      }
+
+      for (let i = 0; i < 5; i++) setTimeout(addOne, i * 760);
+      setInterval(addOne, 1350);
+    }
+
+    setupMusic();
+    createConfetti();
+    createBlessings();
+  </script>
+</body>
+</html>
