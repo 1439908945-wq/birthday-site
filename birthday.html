@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>晓晓 · 生日快乐</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --rose: #ff6fae;
+      --deep-rose: #b92b68;
+      --cream: #fff6df;
+      --champagne: #ffd98c;
+      --ink: #5b2442;
+      --glass: rgba(255,255,255,.28);
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      overflow-x: hidden;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      color: #fff;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(255,255,255,.92), transparent 14%),
+        radial-gradient(circle at 86% 10%, rgba(255,225,240,.88), transparent 22%),
+        radial-gradient(circle at 18% 86%, rgba(255,230,166,.82), transparent 24%),
+        radial-gradient(circle at 78% 84%, rgba(190,165,255,.34), transparent 28%),
+        linear-gradient(145deg, #ff8fbd 0%, #ff6f98 38%, #f9a65f 72%, #ffe8ad 100%);
+    }
+
+    body {
+      min-height: 100svh;
+      position: relative;
+      isolation: isolate;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    body::before {
+      z-index: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.13) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.10) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: radial-gradient(circle at center, black 0 56%, transparent 82%);
+    }
+
+    body::after {
+      z-index: 1;
+      background:
+        radial-gradient(circle at 50% 26%, rgba(255,255,255,.30), transparent 22%),
+        linear-gradient(180deg, rgba(255,255,255,.12), transparent 42%);
+      mix-blend-mode: soft-light;
+    }
+
+    .music-button {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      right: 14px;
+      z-index: 9999;
+      padding: 11px 15px;
+      border: 1px solid rgba(255,255,255,.78);
+      border-radius: 999px;
+      background: rgba(255,255,255,.84);
+      color: #c0266c;
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 14px 38px rgba(106, 20, 61, .22), inset 0 1px 0 rgba(255,255,255,.9);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      transition: transform .2s ease;
+    }
+
+    .music-button:hover { transform: scale(1.05); }
+    .music-button.playing { background: #fff7ce; color: #9a3412; }
+
+    .gesture-button {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      left: 14px;
+      z-index: 9999;
+      padding: 11px 15px;
+      border: 1px solid rgba(255,255,255,.78);
+      border-radius: 999px;
+      background: rgba(255,255,255,.84);
+      color: #c0266c;
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 14px 38px rgba(106, 20, 61, .22), inset 0 1px 0 rgba(255,255,255,.9);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      transition: transform .2s ease;
+    }
+
+    .gesture-button:hover { transform: scale(1.05); }
+    .gesture-button.active { background: #e0f7fa; color: #00796b; }
+
+    .page {
+      position: relative;
+      z-index: 3;
+      min-height: 100svh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: calc(70px + env(safe-area-inset-top)) 14px calc(26px + env(safe-area-inset-bottom));
+    }
+
+    .card {
+      position: relative;
+      width: min(94vw, 440px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      padding: 30px 20px 28px;
+      border: 1px solid rgba(255,255,255,.64);
+      border-radius: 34px;
+      background:
+        linear-gradient(145deg, rgba(255,255,255,.42), rgba(255,255,255,.15)),
+        radial-gradient(circle at 20% 0%, rgba(255,255,255,.72), transparent 36%);
+      box-shadow: 0 30px 90px rgba(128, 20, 68, .30), inset 0 1px 0 rgba(255,255,255,.55);
+      backdrop-filter: blur(25px) saturate(125%);
+      -webkit-backdrop-filter: blur(25px) saturate(125%);
+      overflow: hidden;
+      animation: cardIn .9s cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -120px -80px auto;
+      height: 260px;
+      background: radial-gradient(circle at 50% 0%, rgba(255,255,255,.72), transparent 64%);
+      pointer-events: none;
+    }
+
+    .card::after {
+      content: "Happy Birthday";
+      position: absolute;
+      right: -18px;
+      bottom: 14px;
+      color: rgba(255,255,255,.13);
+      font-size: 58px;
+      font-weight: 900;
+      letter-spacing: -2px;
+      transform: rotate(-8deg);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .content, .visual { position: relative; z-index: 2; width: 100%; }
+    .content { text-align: center; }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 16px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.30);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .4px;
+      color: #fffdf6;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.42), 0 10px 28px rgba(143, 28, 80, .10);
+    }
+
+    h1 {
+      font-size: clamp(50px, 15vw, 72px);
+      line-height: .92;
+      letter-spacing: -2.4px;
+      text-shadow: 0 14px 32px rgba(118,20,66,.25);
+    }
+
+    .name {
+      display: block;
+      margin-top: 10px;
+      color: #fff8c9;
+      filter: drop-shadow(0 6px 12px rgba(151, 72, 0, .16));
+    }
+
+    .desc {
+      margin: 20px auto 0;
+      max-width: 372px;
+      font-size: 16.5px;
+      line-height: 1.86;
+      color: rgba(255,255,255,.98);
+      font-weight: 700;
+      text-shadow: 0 2px 12px rgba(95, 22, 55, .12);
+    }
+
+    .wish-tags {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 20px;
+    }
+
+    .wish-tags span {
+      display: inline-flex;
+      align-items: center;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.27);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.36);
+      color: rgba(255,255,255,.99);
+      font-size: 13px;
+      font-weight: 900;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: all .2s ease;
+    }
+
+    .wish-tags span:hover {
+      transform: scale(1.05);
+      background: rgba(255,255,255,.35);
+    }
+
+    @keyframes cardIn { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  </style>
+</head>
+<body>
+  <button class="gesture-button" type="button">✋ 手势控制</button>
+  <button class="music-button" type="button">🎵 音乐自动开启中</button>
+
+  <audio loop preload="auto" autoplay playsinline webkit-playsinline>
+    <source src="birthday_music_0030_0120.m4a" type="audio/mp4">
+  </audio>
+  
+  <div class="stars"></div>
+
+  <main class="page">
+    <section class="card">
+      <div class="content">
+        <div class="tag">✨ 5月18日 · 只属于晓晓的一天</div>
+        <h1>生日快乐<span class="name">晓晓</span></h1>
+        <p class="desc">愿今天的风、花、音乐和蛋糕，都把温柔送到你身边。新的一岁，愿你继续做闪闪发光的自己：被坚定选择，被好运眷顾，也被生活悄悄偏爱。</p>
+        <div class="wish-tags">
+          <span>愿你常被爱意接住 💖</span>
+          <span>愿每一步都有光 ✨</span>
+          <span>愿快乐不止今天 🎂</span>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
