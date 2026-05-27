@@ -19,241 +19,676 @@
     html, body {
       width: 100%;
       min-height: 100%;
-      overflow-x: hidden;
+      overflow: hidden;
       font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
       color: #fff;
-      background:
-        radial-gradient(circle at 12% 8%, rgba(255,255,255,.92), transparent 14%),
-        radial-gradient(circle at 86% 10%, rgba(255,225,240,.88), transparent 22%),
-        radial-gradient(circle at 18% 86%, rgba(255,230,166,.82), transparent 24%),
-        radial-gradient(circle at 78% 84%, rgba(190,165,255,.34), transparent 28%),
-        linear-gradient(145deg, #ff8fbd 0%, #ff6f98 38%, #f9a65f 72%, #ffe8ad 100%);
+      background: linear-gradient(145deg, #ff8fbd 0%, #ff6f98 38%, #f9a65f 72%, #ffe8ad 100%);
     }
 
-    body {
-      min-height: 100svh;
-      position: relative;
-      isolation: isolate;
-    }
-
-    body::before,
-    body::after {
-      content: "";
+    #particleCanvas {
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    #gestureCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 100;
       pointer-events: none;
     }
 
-    body::before {
-      z-index: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,.13) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.10) 1px, transparent 1px);
-      background-size: 42px 42px;
-      mask-image: radial-gradient(circle at center, black 0 56%, transparent 82%);
-    }
-
-    body::after {
-      z-index: 1;
-      background:
-        radial-gradient(circle at 50% 26%, rgba(255,255,255,.30), transparent 22%),
-        linear-gradient(180deg, rgba(255,255,255,.12), transparent 42%);
-      mix-blend-mode: soft-light;
-    }
-
-    .music-button {
+    .gesture-btn {
       position: fixed;
-      top: max(14px, env(safe-area-inset-top));
-      right: 14px;
+      top: 20px;
+      right: 20px;
       z-index: 9999;
-      padding: 11px 15px;
-      border: 1px solid rgba(255,255,255,.78);
-      border-radius: 999px;
-      background: rgba(255,255,255,.84);
+      padding: 12px 20px;
+      border: none;
+      border-radius: 25px;
+      background: rgba(255,255,255,0.9);
       color: #c0266c;
       font-size: 14px;
       font-weight: 900;
       cursor: pointer;
-      box-shadow: 0 14px 38px rgba(106, 20, 61, .22), inset 0 1px 0 rgba(255,255,255,.9);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      transition: transform .2s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
     }
 
-    .music-button:hover { transform: scale(1.05); }
-    .music-button.playing { background: #fff7ce; color: #9a3412; }
+    .gesture-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
 
-    .gesture-button {
+    .gesture-btn.active {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+
+    .camera-preview {
       position: fixed;
-      top: max(14px, env(safe-area-inset-top));
-      left: 14px;
+      bottom: 20px;
+      right: 20px;
+      width: 200px;
+      height: 150px;
+      border-radius: 15px;
+      overflow: hidden;
+      border: 3px solid white;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      z-index: 9998;
+      display: none;
+    }
+
+    .camera-preview.active {
+      display: block;
+    }
+
+    .camera-preview video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    .gesture-indicator {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 25px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      border-radius: 25px;
+      font-size: 16px;
+      font-weight: bold;
       z-index: 9999;
-      padding: 11px 15px;
-      border: 1px solid rgba(255,255,255,.78);
-      border-radius: 999px;
-      background: rgba(255,255,255,.84);
-      color: #c0266c;
-      font-size: 14px;
-      font-weight: 900;
-      cursor: pointer;
-      box-shadow: 0 14px 38px rgba(106, 20, 61, .22), inset 0 1px 0 rgba(255,255,255,.9);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      transition: transform .2s ease;
+      display: none;
+      backdrop-filter: blur(10px);
     }
 
-    .gesture-button:hover { transform: scale(1.05); }
-    .gesture-button.active { background: #e0f7fa; color: #00796b; }
-
-    .page {
-      position: relative;
-      z-index: 3;
-      min-height: 100svh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: calc(70px + env(safe-area-inset-top)) 14px calc(26px + env(safe-area-inset-bottom));
+    .gesture-indicator.show {
+      display: block;
+      animation: fadeInOut 1.5s ease;
     }
 
-    .card {
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      20% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      80% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    .main-content {
       position: relative;
-      width: min(94vw, 440px);
+      z-index: 10;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 20px;
-      padding: 30px 20px 28px;
-      border: 1px solid rgba(255,255,255,.64);
-      border-radius: 34px;
-      background:
-        linear-gradient(145deg, rgba(255,255,255,.42), rgba(255,255,255,.15)),
-        radial-gradient(circle at 20% 0%, rgba(255,255,255,.72), transparent 36%);
-      box-shadow: 0 30px 90px rgba(128, 20, 68, .30), inset 0 1px 0 rgba(255,255,255,.55);
-      backdrop-filter: blur(25px) saturate(125%);
-      -webkit-backdrop-filter: blur(25px) saturate(125%);
-      overflow: hidden;
-      animation: cardIn .9s cubic-bezier(.2,.8,.2,1) both;
-    }
-
-    .card::before {
-      content: "";
-      position: absolute;
-      inset: -120px -80px auto;
-      height: 260px;
-      background: radial-gradient(circle at 50% 0%, rgba(255,255,255,.72), transparent 64%);
-      pointer-events: none;
-    }
-
-    .card::after {
-      content: "Happy Birthday";
-      position: absolute;
-      right: -18px;
-      bottom: 14px;
-      color: rgba(255,255,255,.13);
-      font-size: 58px;
-      font-weight: 900;
-      letter-spacing: -2px;
-      transform: rotate(-8deg);
-      pointer-events: none;
-      white-space: nowrap;
-    }
-
-    .content, .visual { position: relative; z-index: 2; width: 100%; }
-    .content { text-align: center; }
-
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 16px;
-      padding: 9px 14px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.30);
-      font-size: 13px;
-      font-weight: 900;
-      letter-spacing: .4px;
-      color: #fffdf6;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.42), 0 10px 28px rgba(143, 28, 80, .10);
-    }
-
-    h1 {
-      font-size: clamp(50px, 15vw, 72px);
-      line-height: .92;
-      letter-spacing: -2.4px;
-      text-shadow: 0 14px 32px rgba(118,20,66,.25);
-    }
-
-    .name {
-      display: block;
-      margin-top: 10px;
-      color: #fff8c9;
-      filter: drop-shadow(0 6px 12px rgba(151, 72, 0, .16));
-    }
-
-    .desc {
-      margin: 20px auto 0;
-      max-width: 372px;
-      font-size: 16.5px;
-      line-height: 1.86;
-      color: rgba(255,255,255,.98);
-      font-weight: 700;
-      text-shadow: 0 2px 12px rgba(95, 22, 55, .12);
-    }
-
-    .wish-tags {
-      display: flex;
       justify-content: center;
-      flex-wrap: wrap;
-      gap: 9px;
-      margin-top: 20px;
+      padding: 20px;
     }
 
-    .wish-tags span {
-      display: inline-flex;
-      align-items: center;
-      padding: 9px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.27);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.36);
-      color: rgba(255,255,255,.99);
-      font-size: 13px;
+    .title {
+      font-size: clamp(48px, 12vw, 80px);
       font-weight: 900;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      transition: all .2s ease;
+      text-align: center;
+      margin-bottom: 20px;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      animation: float 3s ease-in-out infinite;
     }
 
-    .wish-tags span:hover {
-      transform: scale(1.05);
-      background: rgba(255,255,255,.35);
+    .subtitle {
+      font-size: clamp(18px, 4vw, 28px);
+      text-align: center;
+      margin-bottom: 30px;
+      opacity: 0.9;
+      animation: fadeInUp 1s ease;
     }
 
-    @keyframes cardIn { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    .instructions {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: rgba(0,0,0,0.6);
+      padding: 15px 20px;
+      border-radius: 15px;
+      font-size: 13px;
+      line-height: 1.8;
+      backdrop-filter: blur(10px);
+      z-index: 9999;
+    }
+
+    .instructions strong {
+      color: #ffd700;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .emoji-rain {
+      position: fixed;
+      top: -50px;
+      font-size: 30px;
+      animation: rain linear infinite;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    @keyframes rain {
+      to {
+        transform: translateY(110vh) rotate(360deg);
+      }
+    }
   </style>
 </head>
 <body>
-  <button class="gesture-button" type="button">✋ 手势控制</button>
-  <button class="music-button" type="button">🎵 音乐自动开启中</button>
-
-  <audio loop preload="auto" autoplay playsinline webkit-playsinline>
-    <source src="birthday_music_0030_0120.m4a" type="audio/mp4">
-  </audio>
+  <canvas id="particleCanvas"></canvas>
+  <canvas id="gestureCanvas"></canvas>
   
-  <div class="stars"></div>
+  <button class="gesture-btn" id="gestureBtn">✋ 开启手势控制</button>
+  
+  <div class="camera-preview" id="cameraPreview">
+    <video id="video" autoplay playsinline></video>
+  </div>
+  
+  <div class="gesture-indicator" id="gestureIndicator"></div>
+  
+  <div class="instructions" id="instructions" style="display: none;">
+    <strong>🎮 手势控制指南</strong><br>
+    ✋ <strong>手掌移动</strong> - 吸引粒子<br>
+    ✊ <strong>握拳</strong> - 粒子爆炸<br>
+    ✌️ <strong>剪刀手</strong> - 创建爱心<br>
+    👍 <strong>点赞</strong> - 彩虹效果<br>
+    ☝️ <strong>食指</strong> - 粒子龙卷风
+  </div>
 
-  <main class="page">
-    <section class="card">
-      <div class="content">
-        <div class="tag">✨ 5月18日 · 只属于晓晓的一天</div>
-        <h1>生日快乐<span class="name">晓晓</span></h1>
-        <p class="desc">愿今天的风、花、音乐和蛋糕，都把温柔送到你身边。新的一岁，愿你继续做闪闪发光的自己：被坚定选择，被好运眷顾，也被生活悄悄偏爱。</p>
-        <div class="wish-tags">
-          <span>愿你常被爱意接住 💖</span>
-          <span>愿每一步都有光 ✨</span>
-          <span>愿快乐不止今天 🎂</span>
-        </div>
-      </div>
-    </section>
-  </main>
+  <div class="main-content">
+    <div class="title">🎂 生日快乐 🎂</div>
+    <div class="subtitle">晓晓 ✨</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script>
+    // 粒子系统
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+    const gestureCanvas = document.getElementById('gestureCanvas');
+    const gestureCtx = gestureCanvas.getContext('2d');
+
+    let particles = [];
+    let hands = null;
+    let camera = null;
+    let gestureActive = false;
+    let handLandmarks = null;
+    let lastGesture = null;
+    let gestureHoldTime = 0;
+    const GESTURE_THRESHOLD = 8;
+
+    // 粒子类
+    class Particle {
+      constructor(x, y, color, type = 'circle') {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * 4;
+        this.vy = (Math.random() - 0.5) * 4;
+        this.color = color;
+        this.size = Math.random() * 8 + 4;
+        this.life = 1;
+        this.decay = Math.random() * 0.02 + 0.01;
+        this.type = type;
+        this.angle = Math.random() * Math.PI * 2;
+        this.speed = Math.random() * 2 + 1;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life -= this.decay;
+        this.size *= 0.98;
+        
+        if (this.type === 'heart') {
+          this.angle += 0.1;
+        }
+      }
+
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = this.life;
+        
+        if (this.type === 'heart') {
+          this.drawHeart();
+        } else {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.fill();
+          
+          // 发光效果
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = this.color;
+        }
+        
+        ctx.restore();
+      }
+
+      drawHeart() {
+        const scale = this.size / 10;
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        ctx.scale(scale, scale);
+        ctx.beginPath();
+        ctx.moveTo(0, -5);
+        ctx.bezierCurveTo(-10, -15, -20, 0, 0, 15);
+        ctx.bezierCurveTo(20, 0, 10, -15, 0, -5);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+      }
+    }
+
+    // 初始化画布大小
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      gestureCanvas.width = window.innerWidth;
+      gestureCanvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // 颜色数组
+    const colors = [
+      '#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', 
+      '#ff6b9d', '#c44dff', '#ff9f43', '#54e346',
+      '#ff4757', '#2ed573', '#1e90ff', '#ff6348'
+    ];
+
+    // 创建初始粒子
+    function createInitialParticles() {
+      for (let i = 0; i < 150; i++) {
+        particles.push(new Particle(
+          Math.random() * canvas.width,
+          Math.random() * canvas.height,
+          colors[Math.floor(Math.random() * colors.length)]
+        ));
+      }
+    }
+    createInitialParticles();
+
+    // 动画循环
+    function animate() {
+      ctx.fillStyle = 'rgba(255, 107, 152, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 绘制粒子
+      particles.forEach((particle, index) => {
+        particle.update();
+        particle.draw();
+        
+        if (particle.life <= 0 || particle.size < 0.5) {
+          particles.splice(index, 1);
+        }
+      });
+
+      // 手势控制效果
+      if (handLandmarks && gestureActive) {
+        drawHandLandmarks();
+        applyHandEffects();
+      }
+
+      // 持续生成粒子
+      if (particles.length < 200 && Math.random() < 0.1) {
+        particles.push(new Particle(
+          Math.random() * canvas.width,
+          Math.random() * canvas.height,
+          colors[Math.floor(Math.random() * colors.length)]
+        ));
+      }
+
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // 绘制手势点
+    function drawHandLandmarks() {
+      if (!handLandmarks) return;
+      
+      gestureCtx.clearRect(0, 0, gestureCanvas.width, gestureCanvas.height);
+      
+      handLandmarks.forEach(landmarks => {
+        // 绘制连接线
+        const connections = [
+          [0, 1], [1, 2], [2, 3], [3, 4],
+          [0, 5], [5, 6], [6, 7], [7, 8],
+          [5, 9], [9, 10], [10, 11], [11, 12],
+          [9, 13], [13, 14], [14, 15], [15, 16],
+          [13, 17], [17, 18], [18, 19], [19, 20],
+          [0, 17]
+        ];
+
+        gestureCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        gestureCtx.lineWidth = 2;
+
+        connections.forEach(([i, j]) => {
+          const start = landmarks[i];
+          const end = landmarks[j];
+          gestureCtx.beginPath();
+          gestureCtx.moveTo(start.x * gestureCanvas.width, start.y * gestureCanvas.height);
+          gestureCtx.lineTo(end.x * gestureCanvas.width, end.y * gestureCanvas.height);
+          gestureCtx.stroke();
+        });
+
+        // 绘制关键点
+        landmarks.forEach((point, index) => {
+          const x = point.x * gestureCanvas.width;
+          const y = point.y * gestureCanvas.height;
+          
+          gestureCtx.beginPath();
+          gestureCtx.arc(x, y, index === 0 ? 12 : 6, 0, Math.PI * 2);
+          gestureCtx.fillStyle = index === 0 ? '#ff4757' : '#fff';
+          gestureCtx.fill();
+          
+          if (index !== 0) {
+            gestureCtx.strokeStyle = '#ff4757';
+            gestureCtx.lineWidth = 2;
+            gestureCtx.stroke();
+          }
+        });
+      });
+    }
+
+    // 手势效果应用
+    function applyHandEffects() {
+      if (!handLandmarks || handLandmarks.length === 0) return;
+
+      const landmarks = handLandmarks[0];
+      const palmCenter = landmarks[9]; // 手掌中心
+      const palmX = palmCenter.x * canvas.width;
+      const palmY = palmCenter.y * canvas.height;
+
+      // 吸引附近的粒子
+      particles.forEach(particle => {
+        const dx = palmX - particle.x;
+        const dy = palmY - particle.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < 150) {
+          const force = (150 - distance) / 150 * 0.5;
+          particle.vx += dx * force * 0.05;
+          particle.vy += dy * force * 0.05;
+          particle.vx *= 0.95;
+          particle.vy *= 0.95;
+        }
+      });
+    }
+
+    // 检测手势
+    function detectGesture(landmarks) {
+      const thumb = landmarks[4];
+      const index = landmarks[8];
+      const middle = landmarks[12];
+      const ring = landmarks[16];
+      const pinky = landmarks[20];
+      const wrist = landmarks[0];
+
+      const thumbUp = thumb.y < landmarks[3].y && thumb.y < wrist.y;
+      const indexUp = index.y < landmarks[6].y;
+      const middleUp = middle.y < landmarks[10].y;
+      const ringUp = ring.y < landmarks[14].y;
+      const pinkyUp = pinky.y < landmarks[18].y;
+
+      const indexTip = index;
+      const thumbTip = thumb;
+
+      const fingersUp = [thumbUp, indexUp, middleUp, ringUp, pinkyUp].filter(Boolean).length;
+
+      // 检测手势类型
+      if (fingersUp === 1 && indexUp) {
+        return 'pointing';
+      } else if (fingersUp === 1 && thumbUp) {
+        return 'thumbsUp';
+      } else if (fingersUp === 2 && indexUp && middleUp && !ringUp && !pinkyUp) {
+        return 'peace';
+      } else if (fingersUp === 5) {
+        return 'openPalm';
+      } else if (fingersUp === 0) {
+        return 'fist';
+      }
+
+      return null;
+    }
+
+    // 执行手势动作
+    function executeGesture(gesture) {
+      const indicator = document.getElementById('gestureIndicator');
+      const landmarks = handLandmarks[0];
+      const palmCenter = landmarks[9];
+      const palmX = palmCenter.x * canvas.width;
+      const palmY = palmCenter.y * canvas.height;
+
+      switch (gesture) {
+        case 'fist':
+          indicator.textContent = '💥 粒子爆炸！';
+          createExplosion(palmX, palmY);
+          break;
+          
+        case 'peace':
+          indicator.textContent = '💖 爱心飘落！';
+          createHearts(palmX, palmY);
+          break;
+          
+        case 'thumbsUp':
+          indicator.textContent = '🌈 彩虹特效！';
+          createRainbow(palmX, palmY);
+          break;
+          
+        case 'pointing':
+          indicator.textContent = '🌀 龙卷风！';
+          createTornado(palmX, palmY);
+          break;
+          
+        case 'openPalm':
+          indicator.textContent = '✨ 粒子吸引！';
+          createAttraction(palmX, palmY);
+          break;
+      }
+
+      indicator.classList.add('show');
+      setTimeout(() => indicator.classList.remove('show'), 1500);
+    }
+
+    // 创建爆炸效果
+    function createExplosion(x, y) {
+      for (let i = 0; i < 80; i++) {
+        const particle = new Particle(x, y, colors[Math.floor(Math.random() * colors.length)]);
+        particle.vx = (Math.random() - 0.5) * 20;
+        particle.vy = (Math.random() - 0.5) * 20;
+        particle.size = Math.random() * 15 + 5;
+        particle.decay = 0.02;
+        particles.push(particle);
+      }
+    }
+
+    // 创建爱心
+    function createHearts(x, y) {
+      for (let i = 0; i < 30; i++) {
+        const particle = new Particle(x, y, colors[Math.floor(Math.random() * colors.length)], 'heart');
+        particle.vx = (Math.random() - 0.5) * 6;
+        particle.vy = (Math.random() - 0.5) * 6 - 2;
+        particle.size = Math.random() * 15 + 10;
+        particle.decay = 0.008;
+        particles.push(particle);
+      }
+    }
+
+    // 创建彩虹
+    function createRainbow(x, y) {
+      const rainbowColors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
+      rainbowColors.forEach((color, i) => {
+        for (let j = 0; j < 15; j++) {
+          const particle = new Particle(x, y, color);
+          const angle = (i / rainbowColors.length) * Math.PI * 2 + j * 0.2;
+          particle.vx = Math.cos(angle) * (4 + j * 0.5);
+          particle.vy = Math.sin(angle) * (4 + j * 0.5);
+          particle.decay = 0.015;
+          particles.push(particle);
+        }
+      });
+    }
+
+    // 创建龙卷风
+    function createTornado(x, y) {
+      for (let i = 0; i < 50; i++) {
+        const particle = new Particle(x, y, colors[Math.floor(Math.random() * colors.length)]);
+        const angle = Math.random() * Math.PI * 2;
+        const radius = Math.random() * 80;
+        particle.vx = Math.cos(angle) * 8;
+        particle.vy = -Math.random() * 8 - 2;
+        particle.size = Math.random() * 10 + 5;
+        particle.decay = 0.01;
+        particles.push(particle);
+      }
+    }
+
+    // 创建吸引效果
+    function createAttraction(x, y) {
+      for (let i = 0; i < 40; i++) {
+        const particle = new Particle(
+          Math.random() * canvas.width,
+          Math.random() * canvas.height,
+          colors[Math.floor(Math.random() * colors.length)]
+        );
+        particle.size = Math.random() * 12 + 6;
+        particle.decay = 0.005;
+        particles.push(particle);
+      }
+    }
+
+    // 手势识别设置
+    function setupGesture() {
+      const gestureBtn = document.getElementById('gestureBtn');
+      const cameraPreview = document.getElementById('cameraPreview');
+      const instructions = document.getElementById('instructions');
+
+      gestureBtn.addEventListener('click', async () => {
+        if (!gestureActive) {
+          try {
+            hands = new Hands({
+              locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+            });
+
+            hands.setOptions({
+              maxNumHands: 1,
+              modelComplexity: 1,
+              minDetectionConfidence: 0.7,
+              minTrackingConfidence: 0.5
+            });
+
+            hands.onResults((results) => {
+              handLandmarks = results.multiHandLandmarks;
+              
+              if (handLandmarks && handLandmarks.length > 0) {
+                const gesture = detectGesture(handLandmarks[0]);
+                
+                if (gesture) {
+                  if (gesture === lastGesture) {
+                    gestureHoldTime++;
+                    if (gestureHoldTime === GESTURE_THRESHOLD) {
+                      executeGesture(gesture);
+                      gestureHoldTime = 0;
+                    }
+                  } else {
+                    lastGesture = gesture;
+                    gestureHoldTime = 0;
+                  }
+                } else {
+                  lastGesture = null;
+                  gestureHoldTime = 0;
+                }
+              }
+            });
+
+            const videoElement = document.getElementById('video');
+            
+            camera = new Camera(videoElement, {
+              onFrame: async () => {
+                await hands.send({ image: videoElement });
+              },
+              width: 640,
+              height: 480
+            });
+
+            await camera.start();
+            
+            gestureActive = true;
+            gestureBtn.textContent = '✋ 关闭手势控制';
+            gestureBtn.classList.add('active');
+            cameraPreview.classList.add('active');
+            instructions.style.display = 'block';
+
+          } catch (error) {
+            console.error('手势识别启动失败:', error);
+            alert('摄像头权限被拒绝或无法访问');
+          }
+        } else {
+          if (camera) {
+            camera.stop();
+            camera = null;
+          }
+          hands = null;
+          handLandmarks = null;
+          gestureActive = false;
+          gestureBtn.textContent = '✋ 开启手势控制';
+          gestureBtn.classList.remove('active');
+          cameraPreview.classList.remove('active');
+          instructions.style.display = 'none';
+          gestureCtx.clearRect(0, 0, gestureCanvas.width, gestureCanvas.height);
+        }
+      });
+    }
+
+    // 创建飘落的表情
+    function createEmojiRain() {
+      const emojis = ['🎂', '🎈', '🎁', '✨', '💖', '🌸', '🎉', '💫'];
+      
+      setInterval(() => {
+        if (Math.random() < 0.3) {
+          const emoji = document.createElement('div');
+          emoji.className = 'emoji-rain';
+          emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+          emoji.style.left = Math.random() * 100 + 'vw';
+          emoji.style.animationDuration = (Math.random() * 3 + 4) + 's';
+          document.body.appendChild(emoji);
+          
+          setTimeout(() => emoji.remove(), 7000);
+        }
+      }, 500);
+    }
+
+    // 初始化
+    setupGesture();
+    createEmojiRain();
+
+    // 音乐控制
+    document.addEventListener('click', () => {
+      const audio = new Audio('birthday_music_0030_0120.m4a');
+      audio.volume = 0.5;
+      audio.play().catch(() => {});
+    }, { once: true });
+  </script>
 </body>
 </html>
