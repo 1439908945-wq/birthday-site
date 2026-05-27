@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>星际粒子行星控制器</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --cyan: #00f7ff;
+      --magenta: #ff00ff;
+      --purple: #8b5cf6;
+      --gold: #ffd700;
+      --dark-bg: #030014;
+      --glass: rgba(0, 247, 255, 0.1);
+      --glow-cyan: 0 0 20px rgba(0, 247, 255, 0.6), 0 0 40px rgba(0, 247, 255, 0.3);
+      --glow-magenta: 0 0 20px rgba(255, 0, 255, 0.6), 0 0 40px rgba(255, 0, 255, 0.3);
+    }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--dark-bg);
+      color: #fff;
+      cursor: crosshair;
+    }
+    
+    body {
+      background: 
+        radial-gradient(ellipse at 20% 30%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 70%, rgba(0, 247, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(255, 0, 255, 0.05) 0%, transparent 70%),
+        var(--dark-bg);
+    }
+    
+    #universe {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    
+    .stars-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+    
+    .stars-bg canvas {
+      width: 100%;
+      height: 100%;
+    }
+    
+    .ui-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+    }
+    
+    .hud {
+      position: absolute;
+      padding: 20px;
+      pointer-events: auto;
+    }
+    
+    .hud-top-left {
+      top: 0;
+      left: 0;
+    }
+    
+    .hud-top-right {
+      top: 0;
+      right: 0;
+      text-align: right;
+    }
+    
+    .hud-bottom-center {
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+    
+    .title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(18px, 3vw, 28px);
+      font-weight: 900;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, var(--cyan), var(--purple), var(--magenta));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none;
+      filter: drop-shadow(0 0 10px rgba(0, 247, 255, 0.5));
+    }
+    
+    .subtitle {
+      font-size: 12px;
+      letter-spacing: 3px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 8px;
+      text-transform: uppercase;
+    }
+    
+    .stats {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .stat-item {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      font-size: 13px;
+    }
+    
+    .stat-label {
+      color: rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-size: 10px;
+    }
+    
+    .stat-value {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      color: var(--cyan);
+      min-width: 60px;
+      text-align: right;
+    }
+    
+    .stat-bar {
+      width: 80px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    
+    .stat-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+    
+    .control-hint {
+      display: flex;
+      gap: 30px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .hint-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      background: var(--glass);
+      border: 1px solid rgba(0, 247, 255, 0.2);
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    
+    .hint-icon {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      background: rgba(0, 247, 255, 0.2);
+      border-radius: 6px;
+    }
+    
+    .hint-text {
+      text-align: left;
+    }
+    
+    .hint-title {
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .hint-desc {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 2px;
+    }
+    
+    .planet-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(80vw, 600px);
+      height: min(80vw, 600px);
+      z-index: 5;
+    }
+    
+    #planetCanvas {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 0 60px rgba(139, 92, 246, 0.4));
+    }
+    
+    .scan-line {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        transparent 50%,
+        rgba(0, 247, 255, 0.02) 50%
+      );
+      background-size: 100% 4px;
+      pointer-events: none;
+      z-index: 100;
+      animation: scanMove 8s linear infinite;
+    }
+    
+    @keyframes scanMove {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(4px); }
+    }
+    
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(rgba(0, 247, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 247, 255, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+      z-index: 2;
+      animation: gridPulse 4s ease-in-out infinite;
+    }
+    
+    @keyframes gridPulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    
+    .corner-frame {
+      position: fixed;
+      width: 80px;
+      height: 80px;
+      border: 2px solid rgba(0, 247, 255, 0.3);
+      pointer-events: none;
+      z-index: 50;
+    }
+    
+    .corner-frame.top-left {
+      top: 20px;
+      left: 20px;
+      border-right: none;
+      border-bottom: none;
+    }
+    
+    .corner-frame.top-right {
+      top: 20px;
+      right: 20px;
+      border-left: none;
+      border-bottom: none;
+    }
+    
+    .corner-frame.bottom-left {
+      bottom: 20px;
+      left: 20px;
+      border-right: none;
+      border-top: none;
+    }
+    
+    .corner-frame.bottom-right {
+      bottom: 20px;
+      right: 20px;
+      border-left: none;
+      border-top: none;
+    }
+    
+    .gesture-indicator {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 15px;
+      z-index: 60;
+    }
+    
+    .gesture-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(0, 247, 255, 0.3);
+      border: 2px solid var(--cyan);
+      transition: all 0.3s ease;
+    }
+    
+    .gesture-dot.active {
+      background: var(--cyan);
+      box-shadow: var(--glow-cyan);
+      transform: scale(1.3);
+    }
+    
+    .mode-switcher {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 60;
+      background: var(--glass);
+      padding: 8px;
+      border-radius: 30px;
+      border: 1px solid rgba(0, 247, 255, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    
+    .mode-btn {
+      padding: 10px 20px;
+      border: none;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.6);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      cursor: pointer;
+      border-radius: 20px;
+      transition: all 0.3s ease;
+    }
+    
+    .mode-btn:hover {
+      color: var(--cyan);
+    }
+    
+    .mode-btn.active {
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      color: #000;
+      box-shadow: var(--glow-cyan);
+    }
+    
+    .energy-bar {
+      position: fixed;
+      left: 30px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 6px;
+      height: 200px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      z-index: 60;
+    }
+    
+    .energy-fill {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: linear-gradient(0deg, var(--magenta), var(--cyan));
+      border-radius: 3px;
+      transition: height 0.5s ease;
+    }
+    
+    .energy-label {
+      position: absolute;
+      left: 20px;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    }
+    
+    .energy-label.top {
+      top: -30px;
+      transform: rotate(180deg);
+    }
+    
+    .energy-label.bottom {
+      bottom: -30px;
+    }
+    
+    .particle-burst {
+      position: fixed;
+      pointer-events: none;
+      z-index: 100;
+    }
+    
+    .burst-particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      animation: burst 1s ease-out forwards;
+    }
+    
+    @keyframes burst {
+      0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(var(--tx), var(--ty)) scale(0);
+        opacity: 0;
+      }
+    }
+    
+    .trail {
+      position: fixed;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--cyan);
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 90;
+      animation: trailFade 0.5s ease-out forwards;
+    }
+    
+    @keyframes trailFade {
+      0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.8;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(0.2);
+        opacity: 0;
+      }
+    }
+    
+    .ripple {
+      position: fixed;
+      border: 2px solid var(--cyan);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: rippleExpand 1s ease-out forwards;
+    }
+    
+    @keyframes rippleExpand {
+      0% {
+        width: 0;
+        height: 0;
+        opacity: 1;
+      }
+      100% {
+        width: 300px;
+        height: 300px;
+        opacity: 0;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .hud {
+        padding: 15px;
+      }
+      
+      .title {
+        font-size: 16px;
+        letter-spacing: 2px;
+      }
+      
+      .subtitle {
+        font-size: 10px;
+      }
+      
+      .stats {
+        gap: 5px;
+      }
+      
+      .stat-item {
+        font-size: 11px;
+      }
+      
+      .stat-bar {
+        width: 50px;
+      }
+      
+      .control-hint {
+        gap: 10px;
+      }
+      
+      .hint-item {
+        padding: 8px 12px;
+      }
+      
+      .hint-icon {
+        width: 24px;
+        height: 24px;
+        font-size: 14px;
+      }
+      
+      .hint-text {
+        display: none;
+      }
+      
+      .energy-bar {
+        left: 15px;
+        height: 120px;
+      }
+      
+      .corner-frame {
+        width: 40px;
+        height: 40px;
+      }
+      
+      .mode-switcher {
+        top: auto;
+        bottom: 150px;
+        transform: translateX(-50%);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="stars-bg">
+    <canvas id="starsCanvas"></canvas>
+  </div>
+  
+  <canvas id="universe"></canvas>
+  
+  <div class="grid-overlay"></div>
+  <div class="scan-line"></div>
+  
+  <div class="corner-frame top-left"></div>
+  <div class="corner-frame top-right"></div>
+  <div class="corner-frame bottom-left"></div>
+  <div class="corner-frame bottom-right"></div>
+  
+  <div class="ui-layer">
+    <div class="hud hud-top-left">
+      <div class="title">星际粒子行星</div>
+      <div class="subtitle">Quantum Particle Controller v2.0</div>
+    </div>
+    
+    <div class="hud hud-top-right">
+      <div class="stats">
+        <div class="stat-item">
+          <span class="stat-label">粒子数</span>
+          <span class="stat-value" id="particleCount">0</span>
+          <div class="stat-bar">
+            <div class="stat-bar-fill" id="particleBar" style="width: 0%"></div>
+          </div>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">能量等级</span>
+          <span class="stat-value" id="energyLevel">0%</span>
+          <div class="stat-bar">
+            <div class="stat-bar-fill" id="energyBar" style="width: 0%"></div>
+          </div>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">旋转角度</span>
+          <span class="stat-value" id="rotationAngle">0°</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">交互模式</span>
+          <span class="stat-value" id="interactionMode">探索</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mode-switcher">
+      <button class="mode-btn active" data-mode="explore">探索</button>
+      <button class="mode-btn" data-mode="orbit">轨道</button>
+      <button class="mode-btn" data-mode="pulse">脉冲</button>
+      <button class="mode-btn" data-mode="chaos">混沌</button>
+    </div>
+    
+    <div class="hud hud-bottom-center">
+      <div class="control-hint">
+        <div class="hint-item">
+          <div class="hint-icon">🖱️</div>
+          <div class="hint-text">
+            <div class="hint-title">移动鼠标</div>
+            <div class="hint-desc">控制行星视角</div>
+          </div>
+        </div>
+        <div class="hint-item">
+          <div class="hint-icon">👆</div>
+          <div class="hint-text">
+            <div class="hint-title">点击拖拽</div>
+            <div class="hint-desc">旋转粒子轨道</div>
+          </div>
+        </div>
+        <div class="hint-item">
+          <div class="hint-icon">✖️</div>
+          <div class="hint-text">
+            <div class="hint-title">双击/双触</div>
+            <div class="hint-desc">触发能量爆发</div>
+          </div>
+        </div>
+        <div class="hint-item">
+          <div class="hint-icon">🔄</div>
+          <div class="hint-text">
+            <div class="hint-title">滚轮/捏合</div>
+            <div class="hint-desc">缩放行星大小</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="energy-bar">
+      <div class="energy-label top">HIGH</div>
+      <div class="energy-fill" id="energyFill" style="height: 50%"></div>
+      <div class="energy-label bottom">LOW</div>
+    </div>
+    
+    <div class="gesture-indicator">
+      <div class="gesture-dot active"></div>
+      <div class="gesture-dot"></div>
+      <div class="gesture-dot"></div>
+      <div class="gesture-dot"></div>
+    </div>
+  </div>
+  
+  <div class="planet-container">
+    <canvas id="planetCanvas"></canvas>
+  </div>
+  
+  <script>
+    class ParticlePlanet {
+      constructor() {
+        this.canvas = document.getElementById('planetCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.universe = document.getElementById('universe');
+        this.universeCtx = this.universe.getContext('2d');
+        this.starsCanvas = document.getElementById('starsCanvas');
+        this.starsCtx = this.starsCanvas.getContext('2d');
+        
+        this.particles = [];
+        this.trails = [];
+        this.bursts = [];
+        this.stars = [];
+        
+        this.mouseX = 0;
+        this.mouseY = 0;
+        this.targetRotationX = 0;
+        this.targetRotationY = 0;
+        this.currentRotationX = 0;
+        this.currentRotationY = 0;
+        
+        this.isDragging = false;
+        this.dragStartX = 0;
+        this.dragStartY = 0;
+        this.manualRotationX = 0;
+        this.manualRotationY = 0;
+        
+        this.scale = 1;
+        this.targetScale = 1;
+        
+        this.mode = 'explore';
+        this.energy = 50;
+        this.time = 0;
+        this.lastTap = 0;
+        
+        this.particleCount = 3000;
+        
+        this.colors = {
+          core: ['#00f7ff', '#00d4ff', '#00b8ff'],
+          outer: ['#8b5cf6', '#a855f7', '#c084fc'],
+          accent: ['#ff00ff', '#ff3366', '#ffd700'],
+          glow: ['rgba(0, 247, 255, 0.6)', 'rgba(139, 92, 246, 0.6)', 'rgba(255, 0, 255, 0.6)']
+        };
+        
+        this.init();
+      }
+      
+      init() {
+        this.setupCanvas();
+        this.createParticles();
+        this.createStars();
+        this.setupEventListeners();
+        this.animate();
+        this.updateStats();
+      }
+      
+      setupCanvas() {
+        const resize = () => {
+          const dpr = window.devicePixelRatio || 1;
+          const rect = this.canvas.getBoundingClientRect();
+          
+          this.canvas.width = rect.width * dpr;
+          this.canvas.height = rect.height * dpr;
+          this.ctx.scale(dpr, dpr);
+          
+          this.universe.width = window.innerWidth * dpr;
+          this.universe.height = window.innerHeight * dpr;
+          this.universeCtx.scale(dpr, dpr);
+          
+          this.starsCanvas.width = window.innerWidth * dpr;
+          this.starsCanvas.height = window.innerHeight * dpr;
+          this.starsCtx.scale(dpr, dpr);
+          
+          this.width = rect.width;
+          this.height = rect.height;
+        };
+        
+        resize();
+        window.addEventListener('resize', resize);
+      }
+      
+      createParticles() {
+        this.particles = [];
+        
+        for (let i = 0; i < this.particleCount; i++) {
+          const layer = Math.random();
+          let radius, phi, theta;
+          
+          if (layer < 0.15) {
+            radius = Math.random() * 0.2 + 0.05;
+          } else if (layer < 0.4) {
+            radius = Math.random() * 0.25 + 0.25;
+          } else if (layer < 0.7) {
+            radius = Math.random() * 0.3 + 0.5;
+          } else {
+            radius = Math.random() * 0.4 + 0.8;
+          }
+          
+          phi = Math.acos(2 * Math.random() - 1);
+          theta = Math.random() * Math.PI * 2;
+          
+          const colorGroup = layer < 0.15 ? 0 : layer < 0.6 ? 1 : 2;
+          const colorSet = this.colors[Object.keys(this.colors)[colorGroup]];
+          
+          this.particles.push({
+            x: radius,
+            y: phi,
+            z: theta,
+            baseRadius: radius,
+            size: Math.random() * 2 + 0.5,
+            speed: (Math.random() * 0.5 + 0.5) * (layer < 0.15 ? 0.02 : 0.01),
+            color: colorSet[Math.floor(Math.random() * colorSet.length)],
+            alpha: Math.random() * 0.5 + 0.5,
+            pulseOffset: Math.random() * Math.PI * 2,
+            orbitSpeed: (Math.random() - 0.5) * 0.002,
+            orbitRadius: Math.random() * 0.1
+          });
+        }
+      }
+      
+      createStars() {
+        this.stars = [];
+        const count = window.innerWidth < 768 ? 100 : 200;
+        
+        for (let i = 0; i < count; i++) {
+          this.stars.push({
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            size: Math.random() * 2 + 0.5,
+            alpha: Math.random() * 0.8 + 0.2,
+            twinkleSpeed: Math.random() * 0.02 + 0.01,
+            twinkleOffset: Math.random() * Math.PI * 2
+          });
+        }
+      }
+      
+      setupEventListeners() {
+        const planetContainer = document.querySelector('.planet-container');
+        
+        planetContainer.addEventListener('mousemove', (e) => {
+          const rect = planetContainer.getBoundingClientRect();
+          this.mouseX = (e.clientX - rect.left - rect.width / 2) / rect.width;
+          this.mouseY = (e.clientY - rect.top - rect.height / 2) / rect.height;
+          
+          if (!this.isDragging) {
+            this.targetRotationX = this.mouseY * 0.5;
+            this.targetRotationY = this.mouseX * 0.5;
+          }
+          
+          if (this.isDragging) {
+            const dx = e.clientX - this.dragStartX;
+            const dy = e.clientY - this.dragStartY;
+            this.manualRotationY += dx * 0.005;
+            this.manualRotationX += dy * 0.005;
+            this.dragStartX = e.clientX;
+            this.dragStartY = e.clientY;
+          }
+          
+          this.createTrail(e.clientX, e.clientY);
+        });
+        
+        planetContainer.addEventListener('mousedown', (e) => {
+          this.isDragging = true;
+          this.dragStartX = e.clientX;
+          this.dragStartY = e.clientY;
+          this.canvas.style.cursor = 'grabbing';
+        });
+        
+        planetContainer.addEventListener('mouseup', () => {
+          this.isDragging = false;
+          this.canvas.style.cursor = 'crosshair';
+        });
+        
+        planetContainer.addEventListener('mouseleave', () => {
+          this.isDragging = false;
+          this.canvas.style.cursor = 'crosshair';
+        });
+        
+        planetContainer.addEventListener('click', (e) => {
+          const now = Date.now();
+          if (now - this.lastTap < 300) {
+            this.triggerBurst(e.clientX, e.clientY);
+          }
+          this.lastTap = now;
+        });
+        
+        planetContainer.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          this.targetScale += e.deltaY * -0.001;
+          this.targetScale = Math.max(0.5, Math.min(2, this.targetScale));
+        }, { passive: false });
+        
+        let touchStartDistance = 0;
+        planetContainer.addEventListener('touchstart', (e) => {
+          if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            this.dragStartX = touch.clientX;
+            this.dragStartY = touch.clientY;
+            this.isDragging = true;
+          } else if (e.touches.length === 2) {
+            touchStartDistance = Math.hypot(
+              e.touches[0].clientX - e.touches[1].clientX,
+              e.touches[0].clientY - e.touches[1].clientY
+            );
+          }
+          
+          const now = Date.now();
+          if (now - this.lastTap < 300) {
+            this.triggerBurst(e.touches[0].clientX, e.touches[0].clientY);
+          }
+          this.lastTap = now;
+        }, { passive: true });
+        
+        planetContainer.addEventListener('touchmove', (e) => {
+          if (e.touches.length === 1 && this.isDragging) {
+            const touch = e.touches[0];
+            const dx = touch.clientX - this.dragStartX;
+            const dy = touch.clientY - this.dragStartY;
+            this.manualRotationY += dx * 0.005;
+            this.manualRotationX += dy * 0.005;
+            this.dragStartX = touch.clientX;
+            this.dragStartY = touch.clientY;
+          } else if (e.touches.length === 2) {
+            const distance = Math.hypot(
+              e.touches[0].clientX - e.touches[1].clientX,
+              e.touches[0].clientY - e.touches[1].clientY
+            );
+            const delta = distance - touchStartDistance;
+            this.targetScale += delta * 0.002;
+            this.targetScale = Math.max(0.5, Math.min(2, this.targetScale));
+            touchStartDistance = distance;
+          }
+        }, { passive: true });
+        
+        planetContainer.addEventListener('touchend', () => {
+          this.isDragging = false;
+        }, { passive: true });
+        
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            this.mode = btn.dataset.mode;
+            document.getElementById('interactionMode').textContent = btn.textContent;
+          });
+        });
+      }
+      
+      createTrail(x, y) {
+        if (Math.random() > 0.3) return;
+        
+        const trail = document.createElement('div');
+        trail.className = 'trail';
+        trail.style.left = x + 'px';
+        trail.style.top = y + 'px';
+        document.body.appendChild(trail);
+        
+        setTimeout(() => trail.remove(), 500);
+      }
+      
+      triggerBurst(x, y) {
+        this.energy = Math.min(100, this.energy + 20);
+        
+        const burst = document.createElement('div');
+        burst.className = 'particle-burst';
+        burst.style.left = x + 'px';
+        burst.style.top = y + 'px';
+        
+        for (let i = 0; i < 30; i++) {
+          const particle = document.createElement('div');
+          particle.className = 'burst-particle';
+          const angle = (Math.PI * 2 / 30) * i;
+          const distance = 50 + Math.random() * 100;
+          const tx = Math.cos(angle) * distance;
+          const ty = Math.sin(angle) * distance;
+          particle.style.setProperty('--tx', tx + 'px');
+          particle.style.setProperty('--ty', ty + 'px');
+          particle.style.background = this.colors.accent[Math.floor(Math.random() * this.colors.accent.length)];
+          burst.appendChild(particle);
+        }
+        
+        document.body.appendChild(burst);
+        setTimeout(() => burst.remove(), 1000);
+        
+        const ripple = document.createElement('div');
+        ripple.className = 'ripple';
+        ripple.style.left = x + 'px';
+        ripple.style.top = y + 'px';
+        ripple.style.transform = 'translate(-50%, -50%)';
+        document.body.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 1000);
+        
+        this.updateStats();
+      }
+      
+      updateParticles() {
+        const modeMultiplier = {
+          explore: 1,
+          orbit: 2,
+          pulse: 3,
+          chaos: 0.5
+        };
+        
+        const mult = modeMultiplier[this.mode];
+        
+        this.particles.forEach((p, i) => {
+          p.z += p.speed * mult;
+          
+          if (this.mode === 'pulse') {
+            const pulse = Math.sin(this.time * 0.05 + p.pulseOffset) * 0.1;
+            p.x = p.baseRadius + pulse;
+          } else if (this.mode === 'chaos') {
+            p.x = p.baseRadius + Math.sin(this.time * 0.1 + i) * p.orbitRadius;
+          }
+          
+          p.y += p.orbitSpeed * mult;
+        });
+      }
+      
+      project(x, y, z) {
+        const centerX = this.width / 2;
+        const centerY = this.height / 2;
+        const radius = Math.min(this.width, this.height) * 0.35 * this.scale;
+        
+        const rotX = this.currentRotationX + this.manualRotationX;
+        const rotY = this.currentRotationY + this.manualRotationY;
+        
+        let px = x * Math.cos(rotY) - z * Math.sin(rotY);
+        let pz = x * Math.sin(rotY) + z * Math.cos(rotY);
+        let py = y * Math.cos(rotX) - pz * Math.sin(rotX);
+        pz = y * Math.sin(rotX) + pz * Math.cos(rotX);
+        
+        const scale = 1 + pz * 0.5;
+        const screenX = centerX + px * radius * scale;
+        const screenY = centerY + py * radius * scale;
+        const depth = (pz + 1) / 2;
+        
+        return { x: screenX, y: screenY, scale: scale, depth: depth };
+      }
+      
+      drawPlanet() {
+        this.ctx.clearRect(0, 0, this.width, this.height);
+        
+        const sortedParticles = [...this.particles].sort((a, b) => {
+          const aProj = this.project(a.x, a.y, a.z);
+          const bProj = this.project(b.x, b.y, b.z);
+          return aProj.depth - bProj.depth;
+        });
+        
+        sortedParticles.forEach(p => {
+          const proj = this.project(p.x, p.y, p.z);
+          
+          if (proj.x < -50 || proj.x > this.width + 50 || 
+              proj.y < -50 || proj.y > this.height + 50) return;
+          
+          const baseSize = p.size * proj.scale * this.scale;
+          const size = baseSize * (0.5 + p.alpha * 0.5);
+          const alpha = p.alpha * proj.depth;
+          
+          if (alpha < 0.1) return;
+          
+          this.ctx.beginPath();
+          this.ctx.arc(proj.x, proj.y, size, 0, Math.PI * 2);
+          
+          const gradient = this.ctx.createRadialGradient(
+            proj.x, proj.y, 0,
+            proj.x, proj.y, size
+          );
+          gradient.addColorStop(0, p.color);
+          gradient.addColorStop(1, 'transparent');
+          
+          this.ctx.fillStyle = gradient;
+          this.ctx.globalAlpha = alpha;
+          this.ctx.fill();
+          
+          if (size > 1.5 && proj.depth > 0.5) {
+            this.ctx.beginPath();
+            this.ctx.arc(proj.x, proj.y, size * 1.5, 0, Math.PI * 2);
+            this.ctx.fillStyle = p.color;
+            this.ctx.globalAlpha = alpha * 0.2;
+            this.ctx.fill();
+          }
+        });
+        
+        this.ctx.globalAlpha = 1;
+        
+        this.drawCore();
+        this.drawRings();
+      }
+      
+      drawCore() {
+        const centerX = this.width / 2;
+        const centerY = this.height / 2;
+        const coreRadius = Math.min(this.width, this.height) * 0.08 * this.scale;
+        
+        const pulse = Math.sin(this.time * 0.1) * 0.2 + 0.8;
+        
+        const gradient = this.ctx.createRadialGradient(
+          centerX, centerY, 0,
+          centerX, centerY, coreRadius * 2
+        );
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+        gradient.addColorStop(0.2, 'rgba(0, 247, 255, 0.8)');
+        gradient.addColorStop(0.5, 'rgba(139, 92, 246, 0.4)');
+        gradient.addColorStop(1, 'transparent');
+        
+        this.ctx.beginPath();
+        this.ctx.arc(centerX, centerY, coreRadius * 2 * pulse, 0, Math.PI * 2);
+        this.ctx.fillStyle = gradient;
+        this.ctx.fill();
+        
+        this.ctx.beginPath();
+        this.ctx.arc(centerX, centerY, coreRadius * 0.5, 0, Math.PI * 2);
+        this.ctx.fillStyle = '#fff';
+        this.ctx.globalAlpha = 0.9;
+        this.ctx.fill();
+        this.ctx.globalAlpha = 1;
+      }
+      
+      drawRings() {
+        const centerX = this.width / 2;
+        const centerY = this.height / 2;
+        const baseRadius = Math.min(this.width, this.height) * 0.35 * this.scale;
+        
+        for (let ring = 0; ring < 3; ring++) {
+          const radius = baseRadius * (0.6 + ring * 0.2);
+          const alpha = 0.3 - ring * 0.08;
+          
+          this.ctx.beginPath();
+          this.ctx.ellipse(
+            centerX, centerY,
+            radius, radius * 0.3,
+            this.currentRotationY + this.manualRotationY,
+            0, Math.PI * 2
+          );
+          
+          this.ctx.strokeStyle = ring === 1 ? 
+            `rgba(255, 0, 255, ${alpha})` : 
+            `rgba(0, 247, 255, ${alpha})`;
+          this.ctx.lineWidth = 2 - ring * 0.5;
+          this.ctx.stroke();
+        }
+      }
+      
+      drawStars() {
+        this.starsCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        
+        this.stars.forEach(star => {
+          const twinkle = Math.sin(this.time * star.twinkleSpeed + star.twinkleOffset) * 0.3 + 0.7;
+          
+          this.starsCtx.beginPath();
+          this.starsCtx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+          this.starsCtx.fillStyle = `rgba(255, 255, 255, ${star.alpha * twinkle})`;
+          this.starsCtx.fill();
+        });
+      }
+      
+      updateStats() {
+        const displayCount = Math.floor(this.particles.length * this.scale);
+        document.getElementById('particleCount').textContent = displayCount.toLocaleString();
+        document.getElementById('particleBar').style.width = (displayCount / this.particleCount * 100) + '%';
+        
+        document.getElementById('energyLevel').textContent = Math.round(this.energy) + '%';
+        document.getElementById('energyBar').style.width = this.energy + '%';
+        document.getElementById('energyFill').style.height = this.energy + '%';
+        
+        const angle = ((this.currentRotationY + this.manualRotationY) * 180 / Math.PI) % 360;
+        document.getElementById('rotationAngle').textContent = Math.round(angle) + '°';
+        
+        const gestureDots = document.querySelectorAll('.gesture-dot');
+        const activeIndex = Math.floor((this.currentRotationY + Math.PI) / (Math.PI * 2) * 4) % 4;
+        gestureDots.forEach((dot, i) => {
+          dot.classList.toggle('active', i === activeIndex);
+        });
+      }
+      
+      animate() {
+        this.time++;
+        
+        this.currentRotationX += (this.targetRotationX - this.currentRotationX) * 0.05;
+        this.currentRotationY += (this.targetRotationY - this.currentRotationY) * 0.05;
+        this.scale += (this.targetScale - this.scale) * 0.1;
+        
+        this.energy -= 0.02;
+        this.energy = Math.max(10, this.energy);
+        
+        this.updateParticles();
+        this.drawPlanet();
+        this.drawStars();
+        
+        if (this.time % 10 === 0) {
+          this.updateStats();
+        }
+        
+        requestAnimationFrame(() => this.animate());
+      }
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      new ParticlePlanet();
+    });
+  </script>
+</body>
+</html>
